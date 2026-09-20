@@ -105,7 +105,7 @@ def scraper(url, driver):
 
 def handler(event, context):
     s3 = boto3.client("s3")
-    bucket = "cliu789test"  # TODO: Modify it to your own s3 bucket
+    bucket = "tananthtutorialbucketing"  # TODO: Modify it to your own s3 bucket
 
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
