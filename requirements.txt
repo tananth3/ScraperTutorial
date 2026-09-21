@@ -8,3 +8,5 @@ requests-html
 selenium==4.9.1
 selenium-wire
 xmltodict
+blinker<1.8
+pyOpenSSL==22.1.0
