@@ -189,5 +189,5 @@ def handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": "Successfully Scrap the Jakson EMC!",
+        "body": "Successfully Scrapped GP!",
     }  # TODO: Modify it to your own message
