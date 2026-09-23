@@ -99,8 +99,61 @@ def scraper1(url, driver):
 # Input: url to scrape, chromedriver
 # Output: A dictionary of dataframe, Ex: {"per_county": <pandas dataframe>, "per_zipcode": <pandas dataframe>, ...}
 # Scraper 1 is an example
+# Attempting from Georgia Power
 def scraper(url, driver):
-    pass
+    def fetch():
+        print(f"fetching outages from {url}")
+        driver.get(url)
+        time.sleep(10)
+
+        # Confirmed: panel needs MENU opened first, still need real markup for this button
+        menu_button = driver.find_elements(By.XPATH, "//*[contains(text(), 'MENU')]")
+        if menu_button:
+            menu_button[0].click()
+            time.sleep(2)
+
+        # Confirmed real markup: the Summary toggle
+        summary_toggle = driver.find_elements(
+            By.XPATH,
+            "//div[@class='head' and @role='button'][.//span[@class='title' and contains(text(), 'Summary')]]"
+        )
+        if summary_toggle:
+            summary_toggle[0].click()
+            time.sleep(2)
+
+        # Confirmed real markup: the "View County" link specifically
+        view_county_link = driver.find_elements(
+            By.XPATH,
+            "//a[@class='row report-link hyperlink-primary'][.//span[contains(text(), 'View County')]]"
+        )
+        if view_county_link:
+            view_county_link[0].click()
+            time.sleep(3)
+
+        return driver.page_source
+
+    def parse():
+        return {"per_County": _parse(fetch())}
+
+    def _parse(page_source):
+        soup = BeautifulSoup(page_source, "html.parser")
+        rows = soup.find_all("div", {"role": "row", "data-parent": True})
+
+        records = []
+        for row in rows:
+            records.append({
+                "County": row.find("div", class_="name").get_text(strip=True) if row.find("div", class_="name") else None,
+                "Customers Affected": row.find("div", class_="cust-a").get_text(strip=True) if row.find("div", class_="cust-a") else None,
+                "Customers Served": row.find("div", class_="cust-s").get_text(strip=True) if row.find("div", class_="cust-s") else None,
+                "Outages": row.find("div", class_="n-out").get_text(strip=True) if row.find("div", class_="n-out") else None,
+            })
+
+        df = pd.DataFrame(records)
+        if len(df) > 0:
+            df["timestamp"] = timenow()
+        return df
+
+    return parse()
 
 
 def handler(event, context):
@@ -120,7 +173,8 @@ def handler(event, context):
 
     url = "https://webapps.jacksonemc.com/nisc/maps/MemberOutageMap/"
 
-    data = scraper1(url, driver)  # TODO: Modify it to your own scraper()
+    # data = scraper(url, driver)  # TODO: Modify it to your own scraper()
+    data = scraper1(url, driver)
 
     driver.close()
     driver.quit()
